@@ -1,5 +1,6 @@
  package com.codegnan.app.ecommercebackendmain.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.DynamicUpdate;
@@ -44,6 +45,9 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
+
     public Product() {
     }
 
@@ -55,7 +59,8 @@ public class Product {
             String status,
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
-            String imageUrl) {
+            String imageUrl,
+            BigDecimal price) {
 
         this.id = id;
         this.name = name;
@@ -65,23 +70,19 @@ public class Product {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.imageUrl = imageUrl;
+        this.price = price;
     }
 
     @PrePersist
     protected void onCreate() {
-
-        LocalDateTime now =
-                LocalDateTime.now();
-
+        LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-
-        updatedAt =
-                LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     public int getId() {
@@ -116,6 +117,10 @@ public class Product {
         return imageUrl;
     }
 
+    public BigDecimal getPrice() {
+        return price;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -148,9 +153,12 @@ public class Product {
         this.imageUrl = imageUrl;
     }
 
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
     @Override
     public String toString() {
-
         return "Product [id=" + id
                 + ", name=" + name
                 + ", brand=" + brand
@@ -159,6 +167,8 @@ public class Product {
                 + ", createdAt=" + createdAt
                 + ", updatedAt=" + updatedAt
                 + ", imageUrl=" + imageUrl
+                + ", price=" + price
                 + "]";
     }
+    
 }

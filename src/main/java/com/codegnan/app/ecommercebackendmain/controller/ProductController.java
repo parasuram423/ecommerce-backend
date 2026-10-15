@@ -1,7 +1,9 @@
- package com.codegnan.app.ecommercebackendmain.controller;
+ 
+package com.codegnan.app.ecommercebackendmain.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.codegnan.app.ecommercebackendmain.entity.Product;
@@ -38,9 +41,34 @@ public class ProductController {
         return productService.getAllProducts();
     }
 
+    // Get paginated products
+    // Example: /api/v1/products/paged?page=0&size=20
+    @GetMapping("/paged")
+    public ResponseEntity<Page<Product>> getProductsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        if (page < 0) {
+            page = 0;
+        }
+
+        if (size < 1) {
+            size = 20;
+        }
+
+        if (size > 100) {
+            size = 100;
+        }
+
+        return ResponseEntity.ok(
+            productService.getProductsPaged(page, size)
+        );
+    }
+
     // Get product by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable int id) {
+    public ResponseEntity<Product> getProductById(
+            @PathVariable int id) {
 
         return productService.getProductById(id)
                 .map(ResponseEntity::ok)
@@ -49,8 +77,12 @@ public class ProductController {
 
     // Add product
     @PostMapping
-    public Product addProduct(@RequestBody Product product) {
-        return productService.addProduct(product);
+    public ResponseEntity<Product> addProduct(
+            @RequestBody Product product) {
+
+        return ResponseEntity.ok(
+            productService.addProduct(product)
+        );
     }
 
     // Update product
@@ -66,13 +98,14 @@ public class ProductController {
         product.setId(id);
 
         return ResponseEntity.ok(
-                productService.updateProduct(product)
+            productService.updateProduct(product)
         );
     }
 
     // Delete product
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable int id) {
+    public ResponseEntity<Void> deleteProduct(
+            @PathVariable int id) {
 
         if (productService.getProductById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -81,5 +114,17 @@ public class ProductController {
         productService.deleteProduct(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    // Update products that have missing/default images
+    @PostMapping("/update-missing-images")
+    public ResponseEntity<String> updateMissingProductImages() {
+
+        int updatedCount =
+            productService.updateMissingProductImages();
+
+        return ResponseEntity.ok(
+            "Product images updated: " + updatedCount
+        );
     }
 }
