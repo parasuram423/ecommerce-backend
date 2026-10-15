@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.codegnan.app.ecommercebackendmain.config.JwtService;
 import com.codegnan.app.ecommercebackendmain.dto.AdminDashboardResponse;
 import com.codegnan.app.ecommercebackendmain.dto.AdminResponse;
 import com.codegnan.app.ecommercebackendmain.dto.CustomerResponse;
@@ -26,12 +27,12 @@ import com.codegnan.app.ecommercebackendmain.service.OrderService;
 
 @RestController
 @CrossOrigin(origins = {
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:5501",
-        "http://localhost:5501",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:5501",
+    "http://localhost:5501",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
 })
 @RequestMapping("/api/v1/admin")
 public class AdminController {
@@ -39,15 +40,18 @@ public class AdminController {
     private final AdminService adminService;
     private final CustomerService customerService;
     private final OrderService orderService;
+    private final JwtService jwtService;
 
     public AdminController(
             AdminService adminService,
             CustomerService customerService,
-            OrderService orderService) {
+            OrderService orderService,
+            JwtService jwtService) {
 
         this.adminService = adminService;
         this.customerService = customerService;
         this.orderService = orderService;
+        this.jwtService = jwtService;
     }
 
     // Admin Login
@@ -57,13 +61,17 @@ public class AdminController {
 
         return adminService
                 .signin(admin.getEmail(), admin.getPassword())
-                .map(savedAdmin -> ResponseEntity.ok(
-                        new AdminResponse(
-                                savedAdmin.getId(),
-                                savedAdmin.getName(),
-                                savedAdmin.getEmail()
-                        )
-                ))
+                .map(savedAdmin -> {
+                    String token = jwtService.generateToken(
+                            savedAdmin.getEmail(), "ADMIN");
+
+                    return ResponseEntity.ok(
+                            new AdminResponse(
+                                    savedAdmin.getId(),
+                                    savedAdmin.getName(),
+                                    savedAdmin.getEmail(),
+                                    token));
+                })
                 .orElse(ResponseEntity.status(401).build());
     }
 
@@ -96,18 +104,15 @@ public class AdminController {
                         new AdminResponse(
                                 savedAdmin.getId(),
                                 savedAdmin.getName(),
-                                savedAdmin.getEmail()
-                        )
-                ))
+                                savedAdmin.getEmail(),
+                                null)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     // Admin Dashboard
     @GetMapping("/dashboard")
     public ResponseEntity<AdminDashboardResponse> getDashboard() {
-
-        return ResponseEntity.ok(
-                adminService.getDashboard());
+        return ResponseEntity.ok(adminService.getDashboard());
     }
 
     // Admin - View All Customers
@@ -120,8 +125,8 @@ public class AdminController {
                         .map(customer -> new CustomerResponse(
                                 customer.getId(),
                                 customer.getName(),
-                                customer.getEmail()
-                        ))
+                                customer.getEmail(),
+                                null))
                         .collect(Collectors.toList());
 
         return ResponseEntity.ok(customers);
@@ -130,8 +135,6 @@ public class AdminController {
     // Admin - View All Orders
     @GetMapping("/orders")
     public ResponseEntity<List<Order>> getAllOrders() {
-
-        return ResponseEntity.ok(
-                orderService.getAllOrders());
+        return ResponseEntity.ok(orderService.getAllOrders());
     }
 }

@@ -1,6 +1,7 @@
  
 package com.codegnan.app.ecommercebackendmain.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -24,7 +25,8 @@ import com.codegnan.app.ecommercebackendmain.service.ProductService;
     "http://127.0.0.1:5500",
     "http://localhost:5500",
     "http://127.0.0.1:5501",
-    "http://localhost:5501"
+    "http://localhost:5501",
+    "http://localhost:5173"
 })
 @RequestMapping("/api/v1/products")
 public class ProductController {
@@ -61,8 +63,61 @@ public class ProductController {
         }
 
         return ResponseEntity.ok(
-            productService.getProductsPaged(page, size)
-        );
+                productService.getProductsPaged(page, size));
+    }
+
+    // Search products by name
+    // Example: /api/v1/products/search?name=laptop
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(
+            @RequestParam String name) {
+
+        return ResponseEntity.ok(
+                productService.searchProducts(name));
+    }
+
+    // Filter products by brand
+    // Example: /api/v1/products/filter/brand?brand=HP
+    @GetMapping("/filter/brand")
+    public ResponseEntity<List<Product>> filterByBrand(
+            @RequestParam String brand) {
+
+        return ResponseEntity.ok(
+                productService.filterProductsByBrand(brand));
+    }
+
+    // Filter products by price range
+    // Example: /api/v1/products/filter/price?min=1000&max=50000
+    @GetMapping("/filter/price")
+    public ResponseEntity<List<Product>> filterByPrice(
+            @RequestParam BigDecimal min,
+            @RequestParam BigDecimal max) {
+
+        if (min.compareTo(BigDecimal.ZERO) < 0
+                || max.compareTo(BigDecimal.ZERO) < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (min.compareTo(max) > 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(
+                productService.filterProductsByPrice(min, max));
+    }
+
+    // Sort products by price: low to high
+    @GetMapping("/sort/price-asc")
+    public ResponseEntity<List<Product>> sortByPriceAsc() {
+        return ResponseEntity.ok(
+                productService.sortProductsByPriceAsc());
+    }
+
+    // Sort products by price: high to low
+    @GetMapping("/sort/price-desc")
+    public ResponseEntity<List<Product>> sortByPriceDesc() {
+        return ResponseEntity.ok(
+                productService.sortProductsByPriceDesc());
     }
 
     // Get product by ID
@@ -81,8 +136,7 @@ public class ProductController {
             @RequestBody Product product) {
 
         return ResponseEntity.ok(
-            productService.addProduct(product)
-        );
+                productService.addProduct(product));
     }
 
     // Update product
@@ -98,8 +152,7 @@ public class ProductController {
         product.setId(id);
 
         return ResponseEntity.ok(
-            productService.updateProduct(product)
-        );
+                productService.updateProduct(product));
     }
 
     // Delete product
@@ -116,15 +169,14 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    // Update products that have missing/default images
+    // Update products with missing/default images
     @PostMapping("/update-missing-images")
     public ResponseEntity<String> updateMissingProductImages() {
 
         int updatedCount =
-            productService.updateMissingProductImages();
+                productService.updateMissingProductImages();
 
         return ResponseEntity.ok(
-            "Product images updated: " + updatedCount
-        );
+                "Product images updated: " + updatedCount);
     }
 }

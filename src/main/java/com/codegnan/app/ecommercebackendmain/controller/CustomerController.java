@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.codegnan.app.ecommercebackendmain.config.JwtService;
 import com.codegnan.app.ecommercebackendmain.dto.CustomerDashboardResponse;
 import com.codegnan.app.ecommercebackendmain.dto.CustomerResponse;
 import com.codegnan.app.ecommercebackendmain.entity.Customer;
@@ -25,9 +26,13 @@ import com.codegnan.app.ecommercebackendmain.service.CustomerService;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final JwtService jwtService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(
+            CustomerService customerService,
+            JwtService jwtService) {
         this.customerService = customerService;
+        this.jwtService = jwtService;
     }
 
     // Customer Signup
@@ -37,13 +42,14 @@ public class CustomerController {
 
         Customer savedCustomer = customerService.signup(customer);
 
-        CustomerResponse response = new CustomerResponse(
-                savedCustomer.getId(),
-                savedCustomer.getName(),
-                savedCustomer.getEmail()
+        return ResponseEntity.ok(
+                new CustomerResponse(
+                        savedCustomer.getId(),
+                        savedCustomer.getName(),
+                        savedCustomer.getEmail(),
+                        null
+                )
         );
-
-        return ResponseEntity.ok(response);
     }
 
     // Customer Signin
@@ -52,19 +58,22 @@ public class CustomerController {
             @RequestBody Customer customer) {
 
         return customerService
-                .signin(
-                        customer.getEmail(),
-                        customer.getPassword()
-                )
-                .map(savedCustomer ->
-                        ResponseEntity.ok(
-                                new CustomerResponse(
-                                        savedCustomer.getId(),
-                                        savedCustomer.getName(),
-                                        savedCustomer.getEmail()
-                                )
-                        )
-                )
+                .signin(customer.getEmail(), customer.getPassword())
+                .map(savedCustomer -> {
+                    String token = jwtService.generateToken(
+                            savedCustomer.getEmail(),
+                            "CUSTOMER"
+                    );
+
+                    return ResponseEntity.ok(
+                            new CustomerResponse(
+                                    savedCustomer.getId(),
+                                    savedCustomer.getName(),
+                                    savedCustomer.getEmail(),
+                                    token
+                            )
+                    );
+                })
                 .orElse(ResponseEntity.status(401).build());
     }
 
@@ -80,7 +89,8 @@ public class CustomerController {
                                 new CustomerResponse(
                                         customer.getId(),
                                         customer.getName(),
-                                        customer.getEmail()
+                                        customer.getEmail(),
+                                        null
                                 )
                         )
                 )
@@ -98,7 +108,8 @@ public class CustomerController {
                                 new CustomerResponse(
                                         customer.getId(),
                                         customer.getName(),
-                                        customer.getEmail()
+                                        customer.getEmail(),
+                                        null
                                 )
                         )
                         .collect(Collectors.toList());

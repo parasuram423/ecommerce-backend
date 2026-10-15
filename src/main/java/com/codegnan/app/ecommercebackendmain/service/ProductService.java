@@ -114,4 +114,38 @@ public class ProductService {
 
         return updatedCount;
     }
+    
+ // Search products by name
+ public List<Product> searchProducts(String name) {
+     return productRepository.findByNameContainingIgnoreCase(name);
+ }
+
+ // Filter products by brand
+ public List<Product> filterProductsByBrand(String brand) {
+     return productRepository.findByBrandContainingIgnoreCase(brand);
+ }
+
+ // Filter products by price range
+ public List<Product> filterProductsByPrice(
+         java.math.BigDecimal minPrice,
+         java.math.BigDecimal maxPrice) {
+
+     if (minPrice.compareTo(maxPrice) > 0) {
+         throw new IllegalArgumentException(
+                 "Minimum price cannot exceed maximum price");
+     }
+
+     return productRepository.findByPriceBetween(minPrice, maxPrice);
+ }
+
+ // Sort products by price: low to high
+ public List<Product> sortProductsByPriceAsc() {
+     return productRepository.findAllByOrderByPriceAsc();
+ }
+
+ // Sort products by price: high to low
+ public List<Product> sortProductsByPriceDesc() {
+     return productRepository.findAllByOrderByPriceDesc();
+ }
+ 
 }
